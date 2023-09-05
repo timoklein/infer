@@ -13,7 +13,6 @@ import gymnasium as gym
 import numpy as np
 import pyrallis
 import torch
-import torch._dynamo as dynamo
 import torch.nn.functional as F
 import torch.optim as optim
 
@@ -172,11 +171,6 @@ def main(cfg: Config) -> None:
             if global_step % cfg.train_frequency == 0:
                 data = rb.sample(cfg.batch_size)
 
-                # Check for graph breaks in torch.compile
-                # breaks = dynamo.explain(
-                #     infer_update, infer_agent, target_network, optimizer, data, cfg.gamma, cfg.use_infer, cfg.loss_coef
-                # )[-1]
-
                 loss, dqn_loss, infer_loss, old_val, grad_norm = infer_update(
                     q_network=infer_agent,
                     target_network=target_network,
@@ -189,8 +183,6 @@ def main(cfg: Config) -> None:
 
                 if global_step % 100 == 0:
                     data = rb.sample(5000)
-
-                    # breaks = dynamo.explain(calculate_feature_rank, infer_agent, data.observations, cfg.feat_rank_epsilon)[-1]
 
                     feat_rank, singular_values = calculate_feature_rank(infer_agent, data.observations, cfg.feat_rank_epsilon)
                     print("SPS:", int(global_step / (time.time() - start_time)))
